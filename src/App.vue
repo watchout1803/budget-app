@@ -24,10 +24,6 @@ const displayDrawer = ref(true)
         }}</v-icon>
         <span class="text">{{ ThemeStore.theme === 'light' ? 'Light' : 'Dark' }}</span>
       </v-btn>
-      <!-- <v-btn class="headerButton">
-        <v-icon>mdi-login</v-icon>
-        <span class="text">login</span>
-      </v-btn> -->
     </v-app-bar>
 
 
@@ -36,19 +32,19 @@ const displayDrawer = ref(true)
       <div class="parent">
         <v-list>
           <v-list-item prepend-icon="mdi-home" to="/">Home</v-list-item>
+          <v-list-item prepend-icon="mdi-cash-multiple" to="/NewBook">New Budget Book</v-list-item>
           <v-list-item prepend-icon="mdi-book" to="/about">About</v-list-item>
         </v-list>
       </div>
     </v-navigation-drawer>
 
-    <!-- <v-main>
+    <v-main>
       <v-container fluid>
         <RouterView />
       </v-container>
-    </v-main> -->
+    </v-main>
   </v-app>
 </template>
 
 <style scoped>
-
 </style>
