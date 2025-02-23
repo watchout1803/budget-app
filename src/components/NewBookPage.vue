@@ -1,42 +1,56 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
-// Form data for creating a new budget
-const newBudget = ref({
-  name: '',
-  description: '',
-  startDate: '',
-  endDate: '',
-  initialAmount: null
-});
+// Default headings
+const defaultIncomeHeaders = ref(["Starting Amount", "Pay Date", "Income", "Additional Income", "Expenses", "Transfer to Savings", "Spendable", "Interest", "Total Savings"]);
+const defaultExpensesHeaders = ref(["EOMonth", "Month", "Date", "Main Category", "Expense Category", "Amount", "Running Monthly Total"]);
 
-const createBudget = () => {
-  console.log('New Budget Created:', newBudget.value);
-  // You can add further logic to save or process this budget
+const createNewBudget = async () => {
+  const workbook = new ExcelJS.Workbook();
+
+  // Create Income sheet
+  const incomeSheet = workbook.addWorksheet('Income');
+  incomeSheet.addRow(defaultIncomeHeaders.value);
+
+  // Create Expenses sheet
+  const expensesSheet = workbook.addWorksheet('Expenses');
+  expensesSheet.addRow(defaultExpensesHeaders.value);
+
+  // Save file
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), 'NewBudget.xlsx');
 };
 </script>
 
 <template>
   <v-app>
 
+
     <!-- Header Bar -->
     <v-container class="text-center py-5">
-      <h1>Create a New Budget</h1>
+      <h1>Create New Budget Spreadsheet</h1>
     </v-container>
 
     <v-main>
       <v-container>
-        <h2 class="mb-4">New Budget Details</h2>
 
-        <v-form @submit.prevent="createBudget">
-          <v-text-field v-model="newBudget.name" label="Budget Name" required></v-text-field>
-          <v-textarea v-model="newBudget.description" label="Description"></v-textarea>
-          <v-text-field v-model="newBudget.startDate" label="Start Date" type="date"></v-text-field>
-          <v-text-field v-model="newBudget.endDate" label="End Date" type="date"></v-text-field>
-          <v-text-field v-model="newBudget.initialAmount" label="Initial Amount ($)" type="number"></v-text-field>
+        <h3>Income Sheet Headers</h3>
+        <v-row>
+          <v-col v-for="(header, index) in defaultIncomeHeaders" :key="index" cols="12" md="6">
+            <v-text-field v-model="defaultIncomeHeaders[index]" :label="`Header ${index + 1}`"></v-text-field>
+          </v-col>
+        </v-row>
 
-          <v-btn color="primary" type="submit" class="mt-4">Create Budget</v-btn>
-        </v-form>
+        <h3>Expenses Sheet Headers</h3>
+        <v-row>
+          <v-col v-for="(header, index) in defaultExpensesHeaders" :key="index" cols="12" md="6">
+            <v-text-field v-model="defaultExpensesHeaders[index]" :label="`Header ${index + 1}`"></v-text-field>
+          </v-col>
+        </v-row>
+
+        <v-btn color="primary" @click="createNewBudget">Create New Budget</v-btn>
       </v-container>
     </v-main>
   </v-app>

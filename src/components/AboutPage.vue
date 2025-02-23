@@ -1,3 +1,3 @@
 <template>
-  <div>about</div>
+  <div>This application was developed by Stephen Vlassopoulos</div>
 </template>

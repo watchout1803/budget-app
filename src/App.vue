@@ -18,12 +18,25 @@ const displayDrawer = ref(true)
 
       <v-app-bar-title>Budget App</v-app-bar-title>
 
+
+      <v-file-input
+      v-if="!budgetUploaded"
+      label="Upload Budget File"
+      @change="loadBudget"
+      accept=".xlsx"
+      class="fileinput"
+    ></v-file-input>
+
+    <v-alert v-if="budgetUploaded" type="success" class="mt-4">
+      File uploaded: {{ uploadedFile?.name }}
+    </v-alert>
       <v-btn class="headerButton themebtn" @click="ThemeStore.toggleTheme()">
         <v-icon>{{
           ThemeStore.theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'
         }}</v-icon>
         <span class="text">{{ ThemeStore.theme === 'light' ? 'Light' : 'Dark' }}</span>
       </v-btn>
+
     </v-app-bar>
 
 
@@ -47,4 +60,10 @@ const displayDrawer = ref(true)
 </template>
 
 <style scoped>
+.fileinput {
+  max-width: 250px;
+  margin-top: 25px; /* Adjust this value as needed */
+  position: relative;
+  z-index: 10; /* Ensures it stays above other elements */
+}
 </style>
