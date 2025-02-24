@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import { useThemeStore } from './stores/theme';
 import ExcelJS from 'exceljs';
 import { useBudgetStore } from './stores/currentBudget';
+import { format } from 'date-fns'; // Import date-fns for formatting
 
 const ThemeStore = useThemeStore();
 const budgetStore = useBudgetStore();
@@ -12,6 +13,14 @@ const displayDrawer = ref(true);
 const budgetUploaded = ref(false);
 const uploadedFile = ref<File | null>(null);
 const menu = ref(false); // Controls dropdown menu visibility
+
+// Function to format Excel dates to "dd/MM/yyyy"
+const formatExcelDate = (value: any) => {
+  if (value instanceof Date) {
+    return format(value, 'dd/MM/yyyy'); // Converts to "dd/MM/yyyy"
+  }
+  return value; // Return as is if not a date
+};
 
 // Function to handle file upload
 const loadBudget = async (event: Event) => {
@@ -35,40 +44,32 @@ const loadBudget = async (event: Event) => {
       const incomeData = [];
       incomeSheet?.eachRow((row, rowIndex) => {
         if (rowIndex !== 1) {
-          incomeData.push(row.values);
+          incomeData.push(row.values.map(formatExcelDate)); // Convert dates
         }
       });
 
       const expenseData = [];
       expensesSheet?.eachRow((row, rowIndex) => {
         if (rowIndex !== 1) {
-          expenseData.push(row.values);
+          expenseData.push(row.values.map(formatExcelDate)); // Convert dates
         }
       });
 
       budgetStore.setIncomeData(incomeData);
       budgetStore.setExpenseData(expenseData);
-      console.log(budgetStore.incomeData); // Logs all income data
-console.log(budgetStore.expenseData); // Logs all expense data
     } catch (error) {
       console.error('Error processing Excel file:', error);
     }
   };
 };
 
-// Function to remove uploaded file and clear table data
+// Function to remove uploaded file and clear budget data
 const removeBudget = () => {
   uploadedFile.value = null;
   budgetUploaded.value = false;
-
-  // Clear budget data in store
-  budgetStore.setIncomeData([]);
-  budgetStore.setExpenseData([]);
+  budgetStore.setIncomeData([]); // Clear income table data
+  budgetStore.setExpenseData([]); // Clear expense table data
 };
-
-
-
-
 </script>
 
 <template>

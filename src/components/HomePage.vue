@@ -22,24 +22,37 @@ const addExpense = () => {
   newExpense.value = { date: '', category: '', description: '', amount: '' }; // Reset form
 };
 
-// Table headers for v-data-table
-const incomeHeaders = [
-  { title: 'Date', key: '1' },
-  { title: 'Type', key: '2' },
-  { title: 'Description', key: '3' },
-  { title: 'Amount', key: '4' },
-];
-
-const expenseHeaders = [
-  { title: 'Date', key: '1' },
-  { title: 'Category', key: '2' },
-  { title: 'Description', key: '3' },
-  { title: 'Amount', key: '4' },
-];
-
 // Watch for budget uploads and trigger reactivity
 watch(() => budgetStore.incomeData, () => {}, { deep: true });
 watch(() => budgetStore.expenseData, () => {}, { deep: true });
+
+const saveUpdatedBudget = async () => {
+  if (!budgetStore.uploadedExcelFile) return;
+
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(budgetStore.uploadedExcelFile); // Load existing file
+
+  const incomeSheet = workbook.getWorksheet('Income');
+  const expenseSheet = workbook.getWorksheet('Expenses');
+
+  if (!incomeSheet || !expenseSheet) return; // Ensure sheets exist
+
+  // Append new income data
+  budgetStore.incomeData.slice(1).forEach(row => {
+    incomeSheet.addRow(row);
+  });
+
+  // Append new expense data
+  budgetStore.expenseData.slice(1).forEach(row => {
+    expenseSheet.addRow(row);
+  });
+
+  // Save updated file
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), 'UpdatedBudget.xlsx');
+};
+
+
 </script>
 
 <template>
@@ -54,26 +67,48 @@ watch(() => budgetStore.expenseData, () => {}, { deep: true });
           <v-expansion-panel>
             <v-expansion-panel-title>View Income</v-expansion-panel-title>
             <v-expansion-panel-text>
-              <v-data-table
-                v-if="incomeData.length"
-                :headers="incomeHeaders"
-                :items="incomeData"
-                class="elevation-1"
-                item-value="1"
-              ></v-data-table>
+              <v-table v-if="incomeData.length">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(income, index) in incomeData" :key="index">
+                    <td>{{ income[1] }}</td> <!-- Assuming date is at index 1 -->
+                    <td>{{ income[2] }}</td> <!-- Type -->
+                    <td>{{ income[3] }}</td> <!-- Description -->
+                    <td>{{ income[4] }}</td> <!-- Amount -->
+                  </tr>
+                </tbody>
+              </v-table>
             </v-expansion-panel-text>
           </v-expansion-panel>
 
           <v-expansion-panel>
             <v-expansion-panel-title>View Expenses</v-expansion-panel-title>
             <v-expansion-panel-text>
-              <v-data-table
-                v-if="expenseData.length"
-                :headers="expenseHeaders"
-                :items="expenseData"
-                class="elevation-1"
-                item-value="1"
-              ></v-data-table>
+              <v-table v-if="expenseData.length">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(expense, index) in expenseData" :key="index">
+                    <td>{{ expense[1] }}</td> <!-- Date -->
+                    <td>{{ expense[2] }}</td> <!-- Category -->
+                    <td>{{ expense[3] }}</td> <!-- Description -->
+                    <td>{{ expense[4] }}</td> <!-- Amount -->
+                  </tr>
+                </tbody>
+              </v-table>
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
