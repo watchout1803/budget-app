@@ -3,9 +3,9 @@ import { ref } from 'vue';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
-// Default headings
-const defaultIncomeHeaders = ref(["Starting Amount", "Pay Date", "Income", "Additional Income", "Expenses", "Transfer to Savings", "Spendable", "Interest", "Total Savings"]);
-const defaultExpensesHeaders = ref(["EOMonth", "Month", "Date", "Main Category", "Expense Category", "Amount", "Running Monthly Total"]);
+// Updated headings from spreadsheet
+const defaultIncomeHeaders = ref(["Date", "Type", "Description", "Amount"]);
+const defaultExpensesHeaders = ref(["Date", "Category", "Description", "Amount"]);
 
 const createNewBudget = async () => {
   const workbook = new ExcelJS.Workbook();
@@ -26,8 +26,6 @@ const createNewBudget = async () => {
 
 <template>
   <v-app>
-
-
     <!-- Header Bar -->
     <v-container class="text-center py-5">
       <h1>Create New Budget Spreadsheet</h1>
@@ -35,7 +33,6 @@ const createNewBudget = async () => {
 
     <v-main>
       <v-container>
-
         <h3>Income Sheet Headers</h3>
         <v-row>
           <v-col v-for="(header, index) in defaultIncomeHeaders" :key="index" cols="12" md="6">

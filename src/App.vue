@@ -1,10 +1,72 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router';
 import { ref } from 'vue';
+import { useThemeStore } from './stores/theme';
+import ExcelJS from 'exceljs';
+import { useBudgetStore } from './stores/currentBudget';
 
-import { useThemeStore } from './stores/theme'
-const ThemeStore = useThemeStore()
-const displayDrawer = ref(true)
+const ThemeStore = useThemeStore();
+const budgetStore = useBudgetStore();
+
+const displayDrawer = ref(true);
+const budgetUploaded = ref(false);
+const uploadedFile = ref<File | null>(null);
+const menu = ref(false); // Controls dropdown menu visibility
+
+// Function to handle file upload
+const loadBudget = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+
+  uploadedFile.value = file;
+  budgetUploaded.value = true;
+  menu.value = false; // Close menu after upload
+
+  const reader = new FileReader();
+  reader.readAsArrayBuffer(file);
+  reader.onload = async () => {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(reader.result as ArrayBuffer);
+
+      const incomeSheet = workbook.getWorksheet('Income');
+      const expensesSheet = workbook.getWorksheet('Expenses');
+
+      const incomeData = [];
+      incomeSheet?.eachRow((row, rowIndex) => {
+        if (rowIndex !== 1) {
+          incomeData.push(row.values);
+        }
+      });
+
+      const expenseData = [];
+      expensesSheet?.eachRow((row, rowIndex) => {
+        if (rowIndex !== 1) {
+          expenseData.push(row.values);
+        }
+      });
+
+      budgetStore.setIncomeData(incomeData);
+      budgetStore.setExpenseData(expenseData);
+      console.log(budgetStore.incomeData); // Logs all income data
+console.log(budgetStore.expenseData); // Logs all expense data
+    } catch (error) {
+      console.error('Error processing Excel file:', error);
+    }
+  };
+};
+
+// Function to remove uploaded file and clear table data
+const removeBudget = () => {
+  uploadedFile.value = null;
+  budgetUploaded.value = false;
+
+  // Clear budget data in store
+  budgetStore.setIncomeData([]);
+  budgetStore.setExpenseData([]);
+};
+
+
 
 
 </script>
@@ -18,27 +80,48 @@ const displayDrawer = ref(true)
 
       <v-app-bar-title>Budget App</v-app-bar-title>
 
+      <!-- Upload Menu -->
+      <v-menu v-model="menu" :close-on-content-click="false" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn v-bind="props" :color="budgetUploaded ? 'green' : 'primary'">
+            <v-icon left>{{ budgetUploaded ? 'mdi-check' : 'mdi-upload' }}</v-icon>
+            {{ budgetUploaded ? 'Uploaded' : 'Upload Spreadsheet' }}
+          </v-btn>
+        </template>
 
-      <v-file-input
-      v-if="!budgetUploaded"
-      label="Upload Budget File"
-      @change="loadBudget"
-      accept=".xlsx"
-      class="fileinput"
-    ></v-file-input>
+        <v-card min-width="300">
+          <v-list>
+            <!-- File Upload Input -->
+            <v-list-item>
+              <v-file-input
+                label="Select Excel File"
+                @change="loadBudget"
+                accept=".xlsx"
+                clearable
+              ></v-file-input>
+            </v-list-item>
 
-    <v-alert v-if="budgetUploaded" type="success" class="mt-4">
-      File uploaded: {{ uploadedFile?.name }}
-    </v-alert>
+            <!-- Success Message & Remove Button -->
+            <v-list-item v-if="budgetUploaded">
+              <v-alert type="success" dense class="checkedinput">
+                File uploaded: {{ uploadedFile?.name }}
+                <v-btn icon @click="removeBudget">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </v-alert>
+            </v-list-item>
+          </v-list>
+        </v-card>
+      </v-menu>
+
+      <!-- Theme Toggle Button -->
       <v-btn class="headerButton themebtn" @click="ThemeStore.toggleTheme()">
         <v-icon>{{
           ThemeStore.theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'
         }}</v-icon>
         <span class="text">{{ ThemeStore.theme === 'light' ? 'Light' : 'Dark' }}</span>
       </v-btn>
-
     </v-app-bar>
-
 
     <!-- NAVIGATION BAR -->
     <v-navigation-drawer v-model="displayDrawer" expand-on-hover>
@@ -60,10 +143,11 @@ const displayDrawer = ref(true)
 </template>
 
 <style scoped>
-.fileinput {
-  max-width: 250px;
-  margin-top: 25px; /* Adjust this value as needed */
-  position: relative;
-  z-index: 10; /* Ensures it stays above other elements */
+.checkedinput {
+  max-width: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
 }
 </style>
